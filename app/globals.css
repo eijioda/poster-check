@@ -1,0 +1,644 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  background: #f5f4f0;
+  color: #2b2b2b;
+  line-height: 1.7;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: #777;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.dropzone {
+  border: 2px dashed #b8b2a6;
+  border-radius: 12px;
+  background: #fff;
+  padding: 40px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone.drag {
+  border-color: #e0687a;
+  background: #fdf2f4;
+}
+
+.dropzone p {
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.filename {
+  margin-top: 16px;
+  font-size: 0.95rem;
+  color: #444;
+  word-break: break-all;
+}
+
+.preview {
+  max-width: 100%;
+  max-height: 320px;
+  margin-top: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+button.primary {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #fff;
+  background: #e0687a;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button.primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  margin-top: 16px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  background: #fff;
+  border: 1px solid #b8b2a6;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.error {
+  margin-top: 20px;
+  padding: 14px;
+  background: #fdecea;
+  border: 1px solid #f5c6c0;
+  border-radius: 8px;
+  color: #b02a1e;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+.summary {
+  margin-top: 28px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e3ded4;
+  font-size: 0.95rem;
+}
+
+.group {
+  margin-top: 24px;
+}
+
+.group h2 {
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+}
+
+.finding {
+  background: #fff;
+  border: 1px solid #e3ded4;
+  border-left-width: 5px;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.finding.error { border-left-color: #d64545; }
+.finding.warning { border-left-color: #e6a23c; }
+.finding.suggestion { border-left-color: #4a90d9; }
+
+.finding .title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.finding .detail {
+  font-size: 0.92rem;
+  color: #555;
+}
+
+.finding .suggestion-text {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f6f8f3;
+  border-radius: 6px;
+  font-size: 0.92rem;
+}
+
+.loading {
+  margin-top: 24px;
+  text-align: center;
+  color: #888;
+}
+
+.cost {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #999;
+}
+
+.passed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.passed-item {
+  background: #eef6ec;
+  border: 1px solid #cde3c8;
+  color: #3a6b32;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.88rem;
+}
+
+a {
+  color: #c25064;
+}
+
+/* ルール編集フォーム */
+.rule-section {
+  margin-top: 24px;
+  padding: 18px 18px 20px;
+  background: #fff;
+  border: 1px solid #e3ded4;
+  border-radius: 12px;
+}
+
+.rule-section h2 {
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.rule-hint {
+  font-size: 0.82rem;
+  color: #999;
+  margin-bottom: 14px;
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.required-row {
+  align-items: flex-start;
+}
+
+.required-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rule-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #cfc9bd;
+  border-radius: 8px;
+  background: #fdfdfb;
+}
+
+.rule-input.note {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.rule-input:focus,
+.rule-textarea:focus {
+  outline: none;
+  border-color: #e0687a;
+}
+
+.rule-textarea {
+  flex: 1;
+  min-height: 60px;
+  padding: 9px 12px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  border: 1px solid #cfc9bd;
+  border-radius: 8px;
+  background: #fdfdfb;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.arrow {
+  color: #c25064;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.del {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #e6d3d3;
+  background: #fdf5f5;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.del:hover {
+  background: #fce4e4;
+  border-color: #e0a0a0;
+}
+
+.add {
+  margin-top: 4px;
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  color: #c25064;
+  background: #fff;
+  border: 1px dashed #d99aa8;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.add:hover {
+  background: #fdf2f4;
+}
+
+.save-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 28px;
+  padding: 16px 0 8px;
+  background: linear-gradient(to top, #f5f4f0 70%, rgba(245, 244, 240, 0));
+}
+
+/* アンケート作成 */
+.survey-cta {
+  margin-top: 32px;
+  padding: 20px;
+  background: #f0f4f8;
+  border: 1px solid #d5e0ea;
+  border-radius: 12px;
+}
+
+.survey-cta h2 {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.form-preview {
+  background: #fff;
+  border: 1px solid #e3ded4;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.form-title {
+  font-weight: bold;
+  font-size: 1.02rem;
+}
+
+.form-desc {
+  font-size: 0.88rem;
+  color: #666;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+
+.q-list {
+  margin: 12px 0 0;
+  padding-left: 22px;
+}
+
+.q-item {
+  margin-bottom: 12px;
+}
+
+.q-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.q-req {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  font-weight: normal;
+  color: #c0392b;
+  background: #fdeceb;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.q-type {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  color: #4a6a8a;
+  background: #eaf1f7;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.q-help {
+  font-size: 0.82rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.q-options {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.steps {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  font-size: 0.92rem;
+}
+
+.steps li {
+  margin-bottom: 6px;
+}
+
+/* 共有リンク */
+.link-box {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e3ded4;
+  border-radius: 8px;
+}
+
+.link-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.link-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.link-url {
+  font-size: 0.78rem;
+  color: #7a7a7a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-copy {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+}
+
+/* QRコード */
+.qr-block {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e3ded4;
+  border-radius: 10px;
+}
+
+.qr-img {
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.qr-side {
+  flex: 1;
+  min-width: 0;
+}
+
+.qr-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.qr-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.qr-actions a {
+  text-decoration: none;
+  text-align: center;
+}
+
+/* 回答フォーム */
+.respond-form {
+  margin-top: 20px;
+}
+
+.respond-q {
+  background: #fff;
+  border: 1px solid #e3ded4;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.respond-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.98rem;
+  margin-bottom: 8px;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.opt input {
+  width: 18px;
+  height: 18px;
+}
+
+.scale-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scale-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.scale-label {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.thanks {
+  text-align: center;
+  padding: 40px 16px;
+}
+
+.thanks h1 {
+  margin-bottom: 12px;
+}
+
+/* 編集ページ */
+.q-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.q-head-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.mini {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #cfc9bd;
+  background: #fff;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.mini:hover {
+  background: #f2efe9;
+}
+
+.q-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.q-controls select {
+  flex: 0 1 auto;
+}
+
+.scale-max {
+  width: 70px;
+  margin-left: 6px;
+}
+
+.options-edit {
+  margin-top: 10px;
+  padding: 10px;
+  background: #faf9f6;
+  border-radius: 8px;
+}
+
+/* 集計結果 */
+.agg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agg-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agg-label {
+  flex: 0 0 34%;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agg-bar {
+  height: 18px;
+  background: #e0687a;
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.3s;
+}
+
+.agg-count {
+  font-size: 0.85rem;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.text-answers {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.92rem;
+}
+
+.text-answers li {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
