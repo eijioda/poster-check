@@ -19,11 +19,11 @@ export async function POST(request, { params }) {
 
   const answers = body?.answers && typeof body.answers === "object" ? body.answers : {};
 
-  // 必須チェック（未回答があれば拒否）
+  // 必須チェック（未回答があれば拒否）。回答は質問の固定ID(qid)で紐づく。
   for (let i = 0; i < survey.questions.length; i++) {
     const q = survey.questions[i];
     if (!q.required) continue;
-    const a = answers[i];
+    const a = q.qid !== undefined ? answers[q.qid] : answers[i];
     const empty =
       a === undefined ||
       a === null ||

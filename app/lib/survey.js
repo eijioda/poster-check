@@ -10,10 +10,25 @@ export const TYPE_LABEL = {
   scale: "段階評価",
 };
 
+// 質問の固定ID。並べ替え・編集しても回答が別の質問にズレないようにするため、
+// 質問1つひとつに変わらないIDを持たせる（回答はこのIDで紐づく）。
+export function genQid() {
+  return "q_" + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+}
+
+// 保存済み回答から、質問に対応する答えを取り出す。
+// 新方式（qidキー）を優先し、旧方式（index キー）にもフォールバックする。
+export function answerFor(answers, question, index) {
+  if (!answers) return undefined;
+  if (question?.qid && answers[question.qid] !== undefined) return answers[question.qid];
+  return answers[index];
+}
+
 // 1問を安全な形にそろえる
 export function normalizeQuestion(q) {
   const type = TYPES.includes(q?.type) ? q.type : "text";
   const out = {
+    qid: typeof q?.qid === "string" && q.qid ? q.qid : genQid(),
     type,
     title: typeof q?.title === "string" ? q.title.trim() : "",
     required: q?.required === true,
@@ -47,4 +62,28 @@ export function cleanForm(f, fallbackTitle) {
     description: typeof src.description === "string" ? src.description.trim() : "",
     questions: normalizeQuestions(src.questions),
   };
+}
+
+// 名前らしい質問があるか
+function hasNameQuestion(questions) {
+  return (questions || []).some((q) =>
+    /名前|氏名|なまえ|お名前/.test(q.title || "")
+  );
+}
+
+// 事後アンケートに「必ず入れる項目」を保証する。
+// AIが省いても、先頭にお名前（必須）を強制的に追加する。
+// 満足度・感想・次回企画はプロンプト側で強く指示しているが、名前だけはここで確実に担保する。
+export function ensureSurveyGuarantees(form) {
+  const questions = Array.isArray(form.questions) ? [...form.questions] : [];
+  if (!hasNameQuestion(questions)) {
+    questions.unshift({
+      qid: genQid(),
+      type: "text",
+      title: "お名前",
+      required: true,
+      help: "回答者のお名前をご記入ください。",
+    });
+  }
+  return { ...form, questions };
 }

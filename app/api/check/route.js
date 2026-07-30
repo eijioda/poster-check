@@ -1,7 +1,25 @@
 import { readRules, buildRulesText } from "../../lib/rules";
+import { createCheck } from "../../lib/checkStore";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+// 共有用に画像を軽く縮小してJPEGのdata URLにする（保存を軽くするため）。
+// PDFや変換失敗時は null を返す。
+async function makeThumbnail(buffer, isImage) {
+  if (!isImage) return null;
+  try {
+    const sharp = (await import("sharp")).default;
+    const jpeg = await sharp(buffer)
+      .rotate()
+      .resize({ width: 1000, withoutEnlargement: true })
+      .jpeg({ quality: 72 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -38,7 +56,8 @@ export async function POST(request) {
     );
   }
 
-  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const base64 = buffer.toString("base64");
 
   const rules = buildRulesText(await readRules());
 
@@ -161,10 +180,24 @@ severityの基準:
     costYen = Math.ceil(usd * 155 * 10) / 10;
   }
 
-  return Response.json({
-    summary: typeof parsed.summary === "string" ? parsed.summary : "",
-    passed,
-    findings,
-    costYen,
-  });
+  const summary = typeof parsed.summary === "string" ? parsed.summary : "";
+
+  // 添削結果を保存して共有リンクを発行（画像は縮小して保存）
+  let shareId = null;
+  try {
+    const image = await makeThumbnail(buffer, isImage);
+    const rec = await createCheck({
+      fileName: file.name || "",
+      summary,
+      passed,
+      findings,
+      image,
+    });
+    shareId = rec.id;
+  } catch {
+    // 保存に失敗してもチェック結果自体は返す
+    shareId = null;
+  }
+
+  return Response.json({ summary, passed, findings, costYen, shareId });
 }

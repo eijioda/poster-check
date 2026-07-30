@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { answerFor } from "../../../lib/survey";
 
 export default function ResultsPage() {
   const { id } = useParams();
@@ -36,7 +37,7 @@ export default function ResultsPage() {
     const header = ["回答日時", ...qs.map((q) => q.title)];
     const rows = data.responses.map((r) => [
       r.at,
-      ...qs.map((_, i) => cell(r.answers[i])),
+      ...qs.map((q, i) => cell(answerFor(r.answers, q, i))),
     ]);
     const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
     const csv = [header, ...rows].map((row) => row.map(esc).join(",")).join("\r\n");
@@ -77,9 +78,9 @@ export default function ResultsPage() {
           </button>
 
           {questions.map((q, i) => (
-            <section className="group" key={i}>
+            <section className="group" key={q.qid || i}>
               <h2>Q{i + 1}. {q.title}</h2>
-              <Aggregate q={q} answers={responses.map((r) => r.answers[i])} />
+              <Aggregate q={q} answers={responses.map((r) => answerFor(r.answers, q, i))} />
             </section>
           ))}
         </>

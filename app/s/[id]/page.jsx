@@ -80,8 +80,10 @@ export default function RespondPage() {
       {survey.description && <p className="form-desc">{survey.description}</p>}
 
       <div className="respond-form">
-        {survey.questions.map((q, i) => (
-          <div className="respond-q" key={i}>
+        {survey.questions.map((q, i) => {
+          const k = q.qid || String(i);
+          return (
+          <div className="respond-q" key={k}>
             <label className="respond-label">
               {q.title}
               {q.required && <span className="q-req">必須</span>}
@@ -91,16 +93,16 @@ export default function RespondPage() {
             {q.type === "text" && (
               <input
                 className="rule-input"
-                value={answers[i] || ""}
-                onChange={(e) => setAnswer(i, e.target.value)}
+                value={answers[k] || ""}
+                onChange={(e) => setAnswer(k, e.target.value)}
               />
             )}
 
             {q.type === "paragraph" && (
               <textarea
                 className="rule-textarea"
-                value={answers[i] || ""}
-                onChange={(e) => setAnswer(i, e.target.value)}
+                value={answers[k] || ""}
+                onChange={(e) => setAnswer(k, e.target.value)}
               />
             )}
 
@@ -109,9 +111,9 @@ export default function RespondPage() {
                 <label className="opt" key={j}>
                   <input
                     type="radio"
-                    name={`q${i}`}
-                    checked={answers[i] === o}
-                    onChange={() => setAnswer(i, o)}
+                    name={`q_${k}`}
+                    checked={answers[k] === o}
+                    onChange={() => setAnswer(k, o)}
                   />
                   {o}
                 </label>
@@ -122,8 +124,8 @@ export default function RespondPage() {
                 <label className="opt" key={j}>
                   <input
                     type="checkbox"
-                    checked={Array.isArray(answers[i]) && answers[i].includes(o)}
-                    onChange={() => toggleCheckbox(i, o)}
+                    checked={Array.isArray(answers[k]) && answers[k].includes(o)}
+                    onChange={() => toggleCheckbox(k, o)}
                   />
                   {o}
                 </label>
@@ -132,13 +134,13 @@ export default function RespondPage() {
             {q.type === "scale" && (
               <div className="scale-row">
                 {q.scaleLabels && <span className="scale-label">{q.scaleLabels[0]}</span>}
-                {Array.from({ length: q.scaleMax || 5 }, (_, k) => k + 1).map((n) => (
+                {Array.from({ length: q.scaleMax || 5 }, (_, kk) => kk + 1).map((n) => (
                   <label className="scale-item" key={n}>
                     <input
                       type="radio"
-                      name={`q${i}`}
-                      checked={answers[i] === n}
-                      onChange={() => setAnswer(i, n)}
+                      name={`q_${k}`}
+                      checked={answers[k] === n}
+                      onChange={() => setAnswer(k, n)}
                     />
                     {n}
                   </label>
@@ -147,7 +149,8 @@ export default function RespondPage() {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {error && <div className="error">{error}</div>}

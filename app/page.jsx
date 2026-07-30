@@ -29,6 +29,11 @@ export default function Home() {
   const [survey, setSurvey] = useState(null);
   const [surveyError, setSurveyError] = useState(null);
   const [origin, setOrigin] = useState("");
+  const [creator, setCreator] = useState("");
+  const [instruction, setInstruction] = useState("");
+  const [applyReg, setApplyReg] = useState(true);
+  const [applySurvey, setApplySurvey] = useState(true);
+  const [scriptCopied, setScriptCopied] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -60,9 +65,14 @@ export default function Home() {
     setSurveyLoading(true);
     setSurveyError(null);
     setSurvey(null);
+    setScriptCopied(false);
     try {
       const form = new FormData();
       form.append("file", file);
+      form.append("creator", creator);
+      form.append("instruction", instruction);
+      form.append("applyReg", String(applyReg));
+      form.append("applySurvey", String(applySurvey));
       const res = await fetch("/api/survey", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "アンケート作成に失敗しました。");
@@ -72,6 +82,25 @@ export default function Home() {
     } finally {
       setSurveyLoading(false);
     }
+  }
+
+  async function copyFormsScript() {
+    if (!survey?.formsScript) return;
+    try {
+      await navigator.clipboard.writeText(survey.formsScript);
+      setScriptCopied(true);
+      setTimeout(() => setScriptCopied(false), 2000);
+    } catch {}
+  }
+
+  function downloadFormsScript() {
+    if (!survey?.formsScript) return;
+    const blob = new Blob([survey.formsScript], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "Googleフォーム作成スクリプト.gs";
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   async function runCheck() {
@@ -214,6 +243,14 @@ export default function Home() {
           <button className="secondary" onClick={downloadMarkdown}>
             結果をMarkdownでダウンロード
           </button>
+          {result.shareId && origin && (
+            <div className="link-box" style={{ marginTop: "16px" }}>
+              <CopyLink
+                label="🔗 添削結果の共有リンク（読み取り専用・関係者に配れます）"
+                url={`${origin}/c/${result.shareId}`}
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -223,6 +260,45 @@ export default function Home() {
           <p className="rule-hint">
             このポスターのイベント用に、「事前申込フォーム」と「事後アンケート」の質問をAIが考えて作ります。ログイン不要で、回答用のURLを配るだけで使えます。
           </p>
+
+          <div className="field">
+            <label className="field-label">作成者名（スプレッドシート記録用）</label>
+            <input
+              className="rule-input"
+              placeholder="例: 小田"
+              value={creator}
+              onChange={(e) => setCreator(e.target.value)}
+            />
+          </div>
+
+          <div className="field">
+            <label className="field-label">AIへの追加指示（任意）</label>
+            <textarea
+              className="rule-textarea"
+              placeholder="例: 所属学校を聞いて／写真のSNS掲載可否を確認して"
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+            />
+            <div className="check-row">
+              <label className="check-inline">
+                <input
+                  type="checkbox"
+                  checked={applyReg}
+                  onChange={(e) => setApplyReg(e.target.checked)}
+                />
+                事前申込フォームに反映
+              </label>
+              <label className="check-inline">
+                <input
+                  type="checkbox"
+                  checked={applySurvey}
+                  onChange={(e) => setApplySurvey(e.target.checked)}
+                />
+                事後アンケートに反映
+              </label>
+            </div>
+          </div>
+
           <button className="primary" onClick={makeSurvey} disabled={surveyLoading}>
             {surveyLoading ? "作成中…（30秒ほどかかります）" : "このポスターからアンケートを作成"}
           </button>
@@ -233,8 +309,15 @@ export default function Home() {
 
       {survey && (
         <>
+          {survey.sheetsConfigured && (
+            <div className="summary" style={{ marginTop: "16px" }}>
+              {survey.sheetSaved
+                ? "✅ mirai塾のスプレッドシートに2行（申込・アンケート）を記録しました。"
+                : "⚠️ スプレッドシートへの記録に失敗しました。Webフォームの機能は問題なく使えます。"}
+            </div>
+          )}
           {typeof survey.costYen === "number" && (
-            <div className="cost" style={{ marginTop: "16px" }}>
+            <div className="cost" style={{ marginTop: "12px" }}>
               今回のAPIコスト目安: 約{survey.costYen}円
             </div>
           )}
@@ -285,9 +368,34 @@ export default function Home() {
               </section>
             );
           })}
-          <p className="rule-hint">
-            リンクはこのアプリが動いている間だけ有効です。配布・回答収集まで本番運用するときは、公開（デプロイ）が必要です。
-          </p>
+          {survey.formsScript && (
+            <section className="group">
+              <h2>Googleフォームでも作りたいとき</h2>
+              <p className="rule-hint">
+                自前アンケートに加えて、同じ内容の本物のGoogleフォームも作れます。運営がGoogleフォームの集計画面を使いたいときにどうぞ。
+              </p>
+              <ol className="steps">
+                <li>
+                  <a href="https://script.google.com" target="_blank" rel="noreferrer">
+                    script.google.com
+                  </a>{" "}
+                  を開き「新しいプロジェクト」を作成
+                </li>
+                <li>最初のコードを消し、下のスクリプトを貼り付けて保存</li>
+                <li>関数一覧で「createForms」を選び「実行」→ 初回は承認</li>
+                <li>実行ログに出る2つのフォームURLを使う</li>
+              </ol>
+              <div className="script-actions">
+                <button className="primary" onClick={copyFormsScript}>
+                  {scriptCopied ? "コピーしました ✓" : "スクリプトをコピー"}
+                </button>
+                <button className="secondary" onClick={downloadFormsScript}>
+                  .gs ファイルで保存
+                </button>
+              </div>
+              <textarea className="script-box" value={survey.formsScript} readOnly spellCheck={false} />
+            </section>
+          )}
         </>
       )}
     </main>
