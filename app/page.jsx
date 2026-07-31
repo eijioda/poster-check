@@ -77,6 +77,10 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "アンケート作成に失敗しました。");
       setSurvey(data);
+      // 生成結果まで自動でスクロール
+      setTimeout(() => {
+        document.getElementById("survey-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
     } catch (e) {
       setSurveyError(e.message);
     } finally {
@@ -309,6 +313,7 @@ export default function Home() {
 
       {survey && (
         <>
+          <div id="survey-results" />
           {survey.sheetsConfigured && (
             <div className="summary" style={{ marginTop: "16px" }}>
               {survey.sheetSaved

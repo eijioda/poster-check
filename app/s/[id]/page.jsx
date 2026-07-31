@@ -11,6 +11,7 @@ export default function RespondPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
+  const [missing, setMissing] = useState(new Set());
 
   useEffect(() => {
     fetch(`/api/survey/${id}`)
@@ -25,6 +26,13 @@ export default function RespondPage() {
 
   function setAnswer(i, value) {
     setAnswers((a) => ({ ...a, [i]: value }));
+    // 入力したら「未回答」の印を外す
+    setMissing((m) => {
+      if (!m.has(i)) return m;
+      const next = new Set(m);
+      next.delete(i);
+      return next;
+    });
   }
 
   function toggleCheckbox(i, option) {
@@ -35,9 +43,36 @@ export default function RespondPage() {
         : [...cur, option];
       return { ...a, [i]: next };
     });
+    setMissing((m) => {
+      if (!m.has(i)) return m;
+      const next = new Set(m);
+      next.delete(i);
+      return next;
+    });
   }
 
   async function submit() {
+    // 送信前に必須の未回答をその場で知らせる（赤枠＋先頭へスクロール）
+    const miss = new Set();
+    for (let i = 0; i < survey.questions.length; i++) {
+      const q = survey.questions[i];
+      if (!q.required) continue;
+      const k = q.qid || String(i);
+      const a = answers[k];
+      const empty =
+        a === undefined ||
+        a === null ||
+        (typeof a === "string" && a.trim() === "") ||
+        (Array.isArray(a) && a.length === 0);
+      if (empty) miss.add(k);
+    }
+    if (miss.size > 0) {
+      setMissing(miss);
+      setError(`未回答の必須項目が ${miss.size} 件あります。赤枠の質問にご記入ください。`);
+      const firstKey = [...miss][0];
+      document.getElementById(`rq-${firstKey}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -83,7 +118,7 @@ export default function RespondPage() {
         {survey.questions.map((q, i) => {
           const k = q.qid || String(i);
           return (
-          <div className="respond-q" key={k}>
+          <div className={`respond-q${missing.has(k) ? " missing" : ""}`} id={`rq-${k}`} key={k}>
             <label className="respond-label">
               {q.title}
               {q.required && <span className="q-req">必須</span>}

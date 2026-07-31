@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { TYPE_LABEL, genQid } from "../../../lib/survey";
 import QrBlock from "../../../components/QrBlock";
@@ -18,12 +18,16 @@ export default function EditPage() {
   const [origin, setOrigin] = useState("");
   const [refineText, setRefineText] = useState("");
   const [refining, setRefining] = useState(false);
-  const [refineMsg, setRefineMsg] = useState(null);
   const [preview, setPreview] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
   const [overIndex, setOverIndex] = useState(null);
   const [bulkQid, setBulkQid] = useState(null);
   const [bulkText, setBulkText] = useState("");
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiChat, setAiChat] = useState([]);
+  const [focusOpt, setFocusOpt] = useState(null);
+  const saveRef = useRef(null);
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -48,6 +52,18 @@ export default function EditPage() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
 
+  // ⌘S / Ctrl+S で保存
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        saveRef.current?.();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   function change(next) {
     setSurvey(next);
     setDirty(true);
@@ -56,10 +72,11 @@ export default function EditPage() {
 
   async function refine() {
     const instruction = refineText.trim();
-    if (!instruction || !survey) return;
+    if (!instruction || !survey || refining) return;
     setRefining(true);
-    setRefineMsg(null);
     setError(null);
+    setAiChat((c) => [...c, { role: "user", text: instruction }]);
+    setRefineText("");
     try {
       const res = await fetch("/api/survey/refine", {
         method: "POST",
@@ -74,10 +91,12 @@ export default function EditPage() {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "修正に失敗しました。");
       change({ ...survey, title: d.title, description: d.description, questions: d.questions });
-      setRefineText("");
-      setRefineMsg("AIが修正しました。内容を確認して、下の「保存する」で確定してください。");
+      setAiChat((c) => [
+        ...c,
+        { role: "ai", text: "修正しました。内容を確認して「保存する」で確定してください。" },
+      ]);
     } catch (e) {
-      setError(e.message);
+      setAiChat((c) => [...c, { role: "ai", text: `エラー: ${e.message}` }]);
     } finally {
       setRefining(false);
     }
@@ -130,7 +149,16 @@ export default function EditPage() {
     setQ(qi, { options });
   }
   function addOption(qi) {
+    const len = (survey.questions[qi].options || []).length;
     setQ(qi, { options: [...(survey.questions[qi].options || []), ""] });
+    setFocusOpt({ qi, oi: len });
+  }
+  // 選択肢入力でEnter → 次の選択肢を追加して続けて入力できる
+  function onOptionKey(e, qi) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addOption(qi);
+    }
   }
   function removeOption(qi, oi) {
     setQ(qi, { options: (survey.questions[qi].options || []).filter((_, idx) => idx !== oi) });
@@ -154,6 +182,16 @@ export default function EditPage() {
   }
 
   async function save() {
+    // 質問文が空だと保存時にその質問が消えてしまうため、先に知らせる
+    const emptyIdx = (survey.questions || [])
+      .map((q, i) => (!q.title || !q.title.trim() ? i + 1 : null))
+      .filter((n) => n !== null);
+    if (emptyIdx.length > 0) {
+      setError(
+        `質問文が空の質問があります（質問 ${emptyIdx.join("・")}）。入力するか、削除してから保存してください。`
+      );
+      return;
+    }
     setSaving(true);
     setMessage(null);
     setError(null);
@@ -174,6 +212,13 @@ export default function EditPage() {
       setSaving(false);
     }
   }
+
+  saveRef.current = save;
+
+  // 吹き出しの会話を常に最新までスクロール
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ block: "nearest" });
+  }, [aiChat, refining, aiOpen]);
 
   if (loading) return <main><p className="loading">読み込み中…</p></main>;
   if (error && !survey) return <main><div className="error">{error}</div></main>;
@@ -218,24 +263,6 @@ export default function EditPage() {
         </div>
       ) : (
         <>
-          {/* ===== AI修正 ===== */}
-          <section className="rule-section" style={{ marginTop: "22px" }}>
-            <h2>AIに修正を頼む</h2>
-            <p className="rule-hint">
-              やりたいことを書くと、AIが質問をまとめて書き換えます。（例:「所属学校の欄を追加して」「満足度を10段階にして」）修正後は確認して「保存する」で確定してください。
-            </p>
-            <textarea
-              className="rule-textarea"
-              placeholder="例: 参加のきっかけ（どこで知ったか）を聞く質問を追加して"
-              value={refineText}
-              onChange={(e) => setRefineText(e.target.value)}
-            />
-            <button className="primary" onClick={refine} disabled={refining || !refineText.trim()} style={{ marginTop: "12px" }}>
-              {refining ? "AIが修正中…" : "AIで修正する"}
-            </button>
-            {refineMsg && <div className="summary" style={{ marginTop: "12px" }}>✨ {refineMsg}</div>}
-          </section>
-
           {/* ===== タイトル・説明 ===== */}
           <section className="rule-section">
             <label className="field-label">タイトル</label>
@@ -294,8 +321,10 @@ export default function EditPage() {
                         <span className={`marker ${q.type}`} />
                         <input
                           className="rule-input"
-                          placeholder={`選択肢 ${oi + 1}`}
+                          placeholder={`選択肢 ${oi + 1}（Enterで次を追加）`}
                           value={o}
+                          autoFocus={focusOpt?.qi === i && focusOpt?.oi === oi}
+                          onKeyDown={(e) => onOptionKey(e, i)}
                           onChange={(e) => setOption(i, oi, e.target.value)}
                         />
                         <button className="del" onClick={() => removeOption(i, oi)} title="削除">🗑</button>
@@ -365,11 +394,68 @@ export default function EditPage() {
 
       <div className="save-bar">
         <button className="primary" onClick={save} disabled={saving || !dirty}>
-          {saving ? "保存中…" : dirty ? "保存する" : "保存済み"}
+          {saving ? "保存中…" : dirty ? "保存する（⌘S）" : "保存済み"}
         </button>
+        {dirty && !message && !error && (
+          <div className="dirty-hint">未保存の変更があります</div>
+        )}
         {message && <div className="summary">✅ {message}</div>}
         {error && <div className="error">{error}</div>}
       </div>
+
+      {/* ===== AIアシスタント（吹き出し） ===== */}
+      {aiOpen && (
+        <div className="ai-panel" role="dialog" aria-label="AIに修正を頼む">
+          <div className="ai-panel-head">
+            <span className="ai-panel-title">✨ AIに修正を頼む</span>
+            <button className="ai-close" onClick={() => setAiOpen(false)} aria-label="閉じる">×</button>
+          </div>
+          <div className="ai-chat">
+            {aiChat.length === 0 && (
+              <div className="ai-bubble ai">
+                やりたいことを書くと、質問をまとめて書き換えます。
+                <div className="ai-examples">
+                  {["所属学校を聞く質問を追加して", "満足度を10段階にして", "質問をもっと簡潔にして"].map((ex) => (
+                    <button key={ex} className="ai-example" onClick={() => setRefineText(ex)}>
+                      {ex}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {aiChat.map((m, i) => (
+              <div className={`ai-bubble ${m.role}`} key={i}>{m.text}</div>
+            ))}
+            {refining && <div className="ai-bubble ai typing">AIが修正しています…</div>}
+            <div ref={chatEndRef} />
+          </div>
+          <div className="ai-input-row">
+            <textarea
+              className="ai-input"
+              placeholder="例: 参加のきっかけを聞く質問を追加して"
+              value={refineText}
+              rows={2}
+              onChange={(e) => setRefineText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  refine();
+                }
+              }}
+            />
+            <button className="ai-send" onClick={refine} disabled={refining || !refineText.trim()} aria-label="送信">
+              ↑
+            </button>
+          </div>
+        </div>
+      )}
+      <button
+        className={`ai-fab${aiOpen ? " open" : ""}`}
+        onClick={() => setAiOpen(!aiOpen)}
+        aria-label="AIに修正を頼む"
+      >
+        {aiOpen ? "×" : "✨"}
+      </button>
     </main>
   );
 }
