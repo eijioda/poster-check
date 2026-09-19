@@ -161,6 +161,7 @@ button.secondary:hover, .secondary:hover { background: var(--surface-soft); bord
 /* ---------- 指摘カード（左に重要度ストライプ） ---------- */
 .finding {
   background: var(--surface);
+  margin-top: 0;
   border: 1px solid var(--line);
   border-left: 4px solid var(--line-strong);
   border-radius: 0 var(--radius) var(--radius) 0;
@@ -659,4 +660,187 @@ button.secondary:hover, .secondary:hover { background: var(--surface-soft); bord
     width: auto;
     max-height: min(440px, calc(100vh - 200px));
   }
+}
+
+/* =========================================================
+   FB文の作成（ディレクター用）
+   設計: docs/design-v2.md 4-1 / 5章
+   ========================================================= */
+
+.amigo-field { margin-top: 16px; }
+
+.fb {
+  margin-top: 32px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+}
+.fb h2 { font-size: 1.12rem; font-weight: 700; margin-bottom: 4px; }
+
+.fb-fields { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.fb-field { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; }
+
+.fb-block { margin-top: 18px; }
+.fb-hint { font-size: 0.8rem; color: var(--faint); margin-top: 6px; }
+
+/* ---- 伝える指摘の選択・並べ替え ---- */
+.fb-list { list-style: none; margin: 8px 0 0; padding: 0; }
+
+.fb-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.fb-item.off { opacity: 0.45; }
+.fb-item > input[type="checkbox"] {
+  width: 20px; height: 20px; margin-top: 2px;
+  accent-color: var(--primary); flex-shrink: 0;
+}
+.fb-item-body { flex: 1; min-width: 0; }
+.fb-item-title { font-size: 0.92rem; font-weight: 600; line-height: 1.5; }
+.fb-item-sub {
+  font-size: 0.82rem; color: var(--success-ink);
+  margin-top: 3px; word-break: break-word;
+}
+
+.fb-move { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.fb-move button {
+  width: 30px; height: 26px;
+  font-family: inherit; font-size: 0.8rem; line-height: 1;
+  color: var(--muted); background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 6px;
+  cursor: pointer;
+}
+.fb-move button:hover:not(:disabled) { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+.fb-move button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* 「まず直す／余裕があれば」の境界線 */
+.fb-divider {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 10px 0; padding: 7px 12px;
+  font-size: 0.76rem; font-weight: 600; color: var(--primary-bg-ink);
+  background: var(--primary-bg);
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius);
+}
+.fb-divider span { min-width: 0; }
+.fb-divider .fb-move { flex-direction: row; }
+
+/* ---- 言い方・長さの選択 ---- */
+.segmented { display: flex; gap: 0; margin-top: 8px; }
+.segmented button {
+  flex: 1;
+  padding: 11px 8px;
+  font-family: inherit; font-size: 0.9rem; font-weight: 600;
+  color: var(--muted); background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-left-width: 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.segmented button:first-child { border-left-width: 1px; border-radius: var(--radius) 0 0 var(--radius); }
+.segmented button:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.segmented button:hover:not(.on) { background: var(--surface-soft); }
+.segmented button.on {
+  color: var(--primary-ink); background: var(--primary);
+  border-color: var(--primary);
+}
+
+.fb-linkcheck { margin-top: 18px; }
+
+/* ---- できあがったFB文 ---- */
+.fb-result { margin-top: 22px; }
+.fb-text {
+  width: 100%;
+  min-height: 180px;
+  margin-top: 8px;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.85;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  resize: vertical;
+  overflow: hidden;
+}
+.fb-text:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-bg);
+  background: var(--surface);
+}
+.fb-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin-top: 8px; font-size: 0.8rem; color: var(--faint);
+}
+.fb-badge {
+  padding: 1px 9px; font-weight: 600;
+  color: var(--warning-ink); background: var(--warning-bg);
+  border: 1px solid #fde68a; border-radius: 999px;
+}
+.fb-cost { color: var(--faint); }
+
+.fb-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.fb-btn { width: auto; margin-top: 0; flex: 1 1 140px; text-align: center; }
+a.fb-btn { line-height: 1.4; padding: 13px 20px; }
+
+/* =========================================================
+   スマホでの操作性（設計: docs/design-v2.md 9章）
+   ========================================================= */
+@media (max-width: 640px) {
+  /* 16px未満だと iOS Safari がタップのたびに画面を拡大してしまう */
+  .rule-input, .rule-textarea, select.rule-input, .fb-text { font-size: 16px; }
+
+  /* タップ領域を確保する */
+  .mini-copy { min-height: 44px; }
+  .fb-move button { width: 38px; height: 34px; }
+
+  /* 縦長ポスターが潰れないように */
+  .preview { max-height: 55vh; }
+
+  .fb { padding: 18px 14px; }
+  .fb-actions { flex-direction: column; }
+  .fb-btn { flex: 1 1 auto; }
+  .fb-divider { font-size: 0.72rem; }
+}
+
+/* 指摘の件数バッジ */
+.sev-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+.sev-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-width: 64px; height: 30px; justify-content: center;
+  padding: 0 13px; font-size: 0.86rem; font-weight: 700; line-height: 1;
+  border-radius: 999px; border: 1px solid;
+}
+.sev-badge.sev-error { color: var(--danger-ink); background: var(--danger-bg); border-color: #fecaca; }
+.sev-badge.sev-warning { color: var(--warning-ink); background: var(--warning-bg); border-color: #fde68a; }
+.sev-badge.sev-suggestion { color: var(--blue-ink); background: var(--blue-bg); border-color: #bfdbfe; }
+
+/* ---------- デモページ ---------- */
+.demo-banner {
+  margin-bottom: 20px;
+  padding: 13px 16px;
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--warning-ink);
+  background: var(--warning-bg);
+  border: 1px solid #fde68a;
+  border-radius: var(--radius);
+}
+.demo-poster {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 0 auto;
+  background: #fff;
 }

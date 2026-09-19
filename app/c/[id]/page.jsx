@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-
-const SEVERITY_LABEL = {
-  error: "❌ 必須項目欠落",
-  warning: "⚠️ 要確認",
-  suggestion: "💡 改善提案",
-};
+import CheckResult from "../../components/CheckResult";
 
 export default function SharedCheckPage() {
   const { id } = useParams();
@@ -44,45 +39,11 @@ export default function SharedCheckPage() {
         <img className="preview shared-poster" src={data.image} alt="ポスター" />
       )}
 
-      {data.summary && (
-        <div className="summary">
-          <strong>総評:</strong> {data.summary}
-        </div>
-      )}
-
-      {data.passed?.length > 0 && (
-        <section className="group">
-          <h2>✅ 確認できた項目（{data.passed.length}件）</h2>
-          <div className="passed">
-            {data.passed.map((p, i) => (
-              <span className="passed-item" key={i}>✓ {p}</span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {["error", "warning", "suggestion"].map((sev) => {
-        const items = findings.filter((f) => f.severity === sev);
-        if (items.length === 0) return null;
-        return (
-          <section className="group" key={sev}>
-            <h2>{SEVERITY_LABEL[sev]}（{items.length}件）</h2>
-            {items.map((f, i) => (
-              <div className={`finding ${sev}`} key={i}>
-                <div className="title">{f.title}</div>
-                {f.detail && <div className="detail">{f.detail}</div>}
-                {f.suggestion && (
-                  <div className="suggestion-text">✏️ 修正案: {f.suggestion}</div>
-                )}
-              </div>
-            ))}
-          </section>
-        );
-      })}
-
-      {findings.length === 0 && (
-        <div className="summary">指摘事項はありませんでした。</div>
-      )}
+      <CheckResult
+        summary={data.summary}
+        passed={data.passed || []}
+        findings={findings}
+      />
     </main>
   );
 }

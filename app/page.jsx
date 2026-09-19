@@ -3,12 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import QrBlock from "./components/QrBlock";
-
-const SEVERITY_LABEL = {
-  error: "❌ 必須項目欠落",
-  warning: "⚠️ 要確認",
-  suggestion: "💡 改善提案",
-};
+import FeedbackComposer from "./components/FeedbackComposer";
+import CheckResult, { SEVERITY_LABEL } from "./components/CheckResult";
 
 const TYPE_LABEL = {
   text: "記述式",
@@ -29,6 +25,7 @@ export default function Home() {
   const [survey, setSurvey] = useState(null);
   const [surveyError, setSurveyError] = useState(null);
   const [origin, setOrigin] = useState("");
+  const [amigo, setAmigo] = useState("");
   const [creator, setCreator] = useState("");
   const [instruction, setInstruction] = useState("");
   const [applyReg, setApplyReg] = useState(true);
@@ -194,6 +191,19 @@ export default function Home() {
         {previewUrl && <img className="preview" src={previewUrl} alt="プレビュー" />}
       </div>
 
+      {file && (
+        <div className="field amigo-field">
+          <label className="field-label">アミーゴ（作った人の名前・任意）</label>
+          <input
+            className="rule-input"
+            placeholder="例: さくら"
+            value={amigo}
+            onChange={(e) => setAmigo(e.target.value)}
+          />
+          <div className="rule-hint">入れておくと、チェック後のFB文の宛名に入ります。</div>
+        </div>
+      )}
+
       <button className="primary" onClick={runCheck} disabled={!file || loading}>
         {loading ? "チェック中…（30秒ほどかかります）" : "チェックする"}
       </button>
@@ -203,47 +213,16 @@ export default function Home() {
 
       {result && (
         <>
-          {result.summary && (
-            <div className="summary">
-              <strong>総評:</strong> {result.summary}
-              {typeof result.costYen === "number" && (
-                <div className="cost">今回のAPIコスト目安: 約{result.costYen}円</div>
-              )}
-            </div>
-          )}
-          {result.passed?.length > 0 && (
-            <section className="group">
-              <h2>✅ 確認できた項目（{result.passed.length}件）</h2>
-              <div className="passed">
-                {result.passed.map((p, i) => (
-                  <span className="passed-item" key={i}>✓ {p}</span>
-                ))}
-              </div>
-            </section>
-          )}
-          {["error", "warning", "suggestion"].map((sev) => {
-            const items = findings.filter((f) => f.severity === sev);
-            if (items.length === 0) return null;
-            return (
-              <section className="group" key={sev}>
-                <h2>
-                  {SEVERITY_LABEL[sev]}（{items.length}件）
-                </h2>
-                {items.map((f, i) => (
-                  <div className={`finding ${sev}`} key={i}>
-                    <div className="title">{f.title}</div>
-                    {f.detail && <div className="detail">{f.detail}</div>}
-                    {f.suggestion && (
-                      <div className="suggestion-text">✏️ 修正案: {f.suggestion}</div>
-                    )}
-                  </div>
-                ))}
-              </section>
-            );
-          })}
-          {findings.length === 0 && (
-            <div className="summary">指摘事項はありませんでした。</div>
-          )}
+          <CheckResult
+            summary={result.summary}
+            passed={result.passed || []}
+            findings={findings}
+          >
+            {typeof result.costYen === "number" && (
+              <div className="cost">今回のAPIコスト目安: 約{result.costYen}円</div>
+            )}
+          </CheckResult>
+
           <button className="secondary" onClick={downloadMarkdown}>
             結果をMarkdownでダウンロード
           </button>
@@ -255,6 +234,15 @@ export default function Home() {
               />
             </div>
           )}
+
+          <FeedbackComposer
+            findings={findings}
+            passed={result.passed || []}
+            summary={result.summary || ""}
+            checkId={result.shareId || null}
+            shareUrl={result.shareId && origin ? `${origin}/c/${result.shareId}` : ""}
+            defaultTo={amigo}
+          />
         </>
       )}
 
